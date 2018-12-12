@@ -16,99 +16,152 @@ text {
   font-family: sans-serif;
   font-size: 10px;
 }
+#mapid { 
+  position: absolute;
+   top: 0;
+   right: 0;
+   bottom: 0;
+   left: 0;
+}
 
 </style>
-<svg width="960" height="600"></svg>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></script>
-<script>
 
-d3.csv("data.csv", function(data) {
-  console.log(data);
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+    integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+    crossorigin=""/>
+
+    <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+    integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+    crossorigin=""></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js">
+
+
+console.log("before loading");
+
+
+d3.csv("airports.csv", function(data_airports) {
+  console.log(data_airports[0]);
 });
+console.log("read_airports");
 
-console.log("after loading");
 
-// var svg = d3.select("svg"),
-//     width = +svg.attr("width"),
-//     height = +svg.attr("height");
-
-// var color = d3.scaleOrdinal(d3.schemeCategory20);
-
-// var simulation = d3.forceSimulation()
-//     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-//     .force("charge", d3.forceManyBody())
-//     .force("center", d3.forceCenter(width / 2, height / 2));
-
-// d3.json("miserables.json", function(error, graph) {
-//   if (error) throw error;
-
-//   var link = svg.append("g")
-//       .attr("class", "links")
-//     .selectAll("line")
-//     .data(graph.links)
-//     .enter().append("line")
-//       .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
-
-//   var node = svg.append("g")
-//       .attr("class", "nodes")
-//     .selectAll("g")
-//     .data(graph.nodes)
-//     .enter().append("g")
-    
-//   var circles = node.append("circle")
-//       .attr("r", 5)
-//       .attr("fill", function(d) { return color(d.group); })
-//       .call(d3.drag()
-//           .on("start", dragstarted)
-//           .on("drag", dragged)
-//           .on("end", dragended));
-
-//   var lables = node.append("text")
-//       .text(function(d) {
-//         return d.id;
-//       })
-//       .attr('x', 6)
-//       .attr('y', 3);
-
-//   node.append("title")
-//       .text(function(d) { return d.id; });
-
-//   simulation
-//       .nodes(graph.nodes)
-//       .on("tick", ticked);
-
-//   simulation.force("link")
-//       .links(graph.links);
-
-//   function ticked() {
-//     link
-//         .attr("x1", function(d) { return d.source.x; })
-//         .attr("y1", function(d) { return d.source.y; })
-//         .attr("x2", function(d) { return d.target.x; })
-//         .attr("y2", function(d) { return d.target.y; });
-
-//     node
-//         .attr("transform", function(d) {
-//           return "translate(" + d.x + "," + d.y + ")";
-//         })
-//   }
-// });
-
-// function dragstarted(d) {
-//   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-//   d.fx = d.x;
-//   d.fy = d.y;
-// }
-
-// function dragged(d) {
-//   d.fx = d3.event.x;
-//   d.fy = d3.event.y;
-// }
-
-// function dragended(d) {
-//   if (!d3.event.active) simulation.alphaTarget(0);
-//   d.fx = null;
-//   d.fy = null;
-// }
+d3.csv("airports.csv", function(data_routes) {
+  console.log(data_routes[0]);
+});
+console.log("read_routes");
 
 </script>
+
+</head>
+<body>
+  <div id="mapid"></div>
+  <script >
+
+      var mymap = L.map('mapid').setView([55.605, 13], 7);
+      
+      
+      L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+        maxZoom: 18,
+        id: 'mapbox.streets',
+        accessToken: 'sk.eyJ1IjoicmlhLWFuZHJlZWEiLCJhIjoiY2pwbHEweWE3MDR1MTQzcXVuY25mbmtjaSJ9.hw5_KcxgcC_qFwrAwhbmqw'
+      }).addTo(mymap);
+
+
+      var marker = L.marker([51.5, -0.09]).addTo(mymap);
+
+      var circle = L.circle([51.508, -0.11], {
+          color: 'red',
+          fillColor: '#f03',
+          fillOpacity: 0.5,
+          radius: 500
+      }).addTo(mymap);
+      
+      // var svg = d3.select("svg"),
+      //     width = +svg.attr("width"),
+      //     height = +svg.attr("height");
+      
+      // var color = d3.scaleOrdinal(d3.schemeCategory20);
+      
+      // var simulation = d3.forceSimulation()
+      //     .force("link", d3.forceLink().id(function(d) { return d.id; }))
+      //     .force("charge", d3.forceManyBody())
+      //     .force("center", d3.forceCenter(width / 2, height / 2));
+      
+      // d3.json("miserables.json", function(error, graph) {
+      //   if (error) throw error;
+      
+      //   var link = svg.append("g")
+      //       .attr("class", "links")
+      //     .selectAll("line")
+      //     .data(graph.links)
+      //     .enter().append("line")
+      //       .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
+      
+      //   var node = svg.append("g")
+      //       .attr("class", "nodes")
+      //     .selectAll("g")
+      //     .data(graph.nodes)
+      //     .enter().append("g")
+          
+      //   var circles = node.append("circle")
+      //       .attr("r", 5)
+      //       .attr("fill", function(d) { return color(d.group); })
+      //       .call(d3.drag()
+      //           .on("start", dragstarted)
+      //           .on("drag", dragged)
+      //           .on("end", dragended));
+      
+      //   var lables = node.append("text")
+      //       .text(function(d) {
+      //         return d.id;
+      //       })
+      //       .attr('x', 6)
+      //       .attr('y', 3);
+      
+      //   node.append("title")
+      //       .text(function(d) { return d.id; });
+      
+      //   simulation
+      //       .nodes(graph.nodes)
+      //       .on("tick", ticked);
+      
+      //   simulation.force("link")
+      //       .links(graph.links);
+      
+      //   function ticked() {
+      //     link
+      //         .attr("x1", function(d) { return d.source.x; })
+      //         .attr("y1", function(d) { return d.source.y; })
+      //         .attr("x2", function(d) { return d.target.x; })
+      //         .attr("y2", function(d) { return d.target.y; });
+      
+      //     node
+      //         .attr("transform", function(d) {
+      //           return "translate(" + d.x + "," + d.y + ")";
+      //         })
+      //   }
+      // });
+      
+      // function dragstarted(d) {
+      //   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+      //   d.fx = d.x;
+      //   d.fy = d.y;
+      // }
+      
+      // function dragged(d) {
+      //   d.fx = d3.event.x;
+      //   d.fy = d3.event.y;
+      // }
+      
+      // function dragended(d) {
+      //   if (!d3.event.active) simulation.alphaTarget(0);
+      //   d.fx = null;
+      //   d.fy = null;
+      // }
+      
+      </script>
+</body>
