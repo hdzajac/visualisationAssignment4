@@ -36,30 +36,132 @@ text {
     crossorigin=""></script>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"> </script>
+<script src = "https://d3js.org/d3-request.v1.min.js"></script>
 
-
-console.log("before loading");
-
-
-d3.csv("airports.csv", function(data_airports) {
-  console.log(data_airports[0]);
-});
-console.log("read_airports");
-
-
-d3.csv("airports.csv", function(data_routes) {
-  console.log(data_routes[0]);
-});
-console.log("read_routes");
-
-</script>
 
 </head>
-<body>
+<body >
   <div id="mapid"></div>
   <script >
+	var airports = {}; 
+	var danishAirportsCoord = {}
+	var danishAirportsRoutes = {}
+	
+	function Graph()
+	{
+		this.adjList = {}
+	}
+	
+	Graph.prototype.addVertex = function(vertex)
+	{
+		this.adjList[vertex] = []
+	}
+	
+	Graph.prototype.addEdge = function(v1, v2)
+	{	
+		this.adjList[v1].push(v2)
+	}
+	
+	Graph.prototype.vertexExists = function(v1)
+	{	
+		return v1 in this.adjList
+	}
+	
+	Graph.prototype.getAdjList = function()
+	{	
+		return this.adjList
+	}
+	
+	
+	
+	function getAirports(map)
+	{
+	 d3.csv("airports.csv", function(data) 
+	 {
+			var graph = new Graph()
+			for (var i = 0; i < data.length; i++) 
+			{							
+				var airport = data[i]
+				airports[airport.Code] = [ data[i].Latitude,  data[i].Longitude]	
+				if (airport.Country == "Denmark")
+				{
+					danishAirportsCoord[airport.Code] = [ data[i].Latitude,  data[i].Longitude]
+					graph.addVertex(airport.Code)	
+				}
+				
+			}	
+			
+			addMarkers(danishAirportsCoord, map)	
+						
+			d3.csv("routes.csv", function(routes) 
+			{			
+				for (var i = 0; i < routes.length; i++) 
+				{
+					var route = routes[i]					
+					if (route.Source in danishAirportsCoord)	// from Dk					
+					{
+						graph.addEdge(route.Source, route.Destination)
+						if(graph.vertexExists(route.Destination) == false)
+						{
+							graph.addVertex(route.Destination)
+						}
+					}	
 
+					if (route.Destination in danishAirportsCoord)	// to DK					
+					{
+						//if(graph.vertexExists(route.Source))
+						//	graph.addEdge(route.Source, route.Destination)
+					}	
+				}
+				
+				console.log("Graph:", graph)
+				addLines(airports, graph, map)
+			});
+				
+		});
+		
+
+	}
+
+	
+	function addLines(airports, graph, map)
+	{		
+		var adjList = graph.getAdjList()
+		var nodes = Object.keys(adjList)
+		for (var i = 0; i < nodes.length; i++) 
+		{
+			var neighbors = adjList[nodes[i]]
+			for (var j = 0; j <neighbors.length; j++) 
+			{
+				
+				var latlonS = [parseFloat(airports[nodes[i]][0]), parseFloat(airports[nodes[i]][1])]
+				var latlonD = [parseFloat(airports[neighbors[j]][0]), parseFloat(airports[neighbors[j]][1])]
+				var points = [latlonS, latlonD]
+				console.log(points)
+				var polyline = L.polyline(points).addTo(map);
+			}
+			
+		}
+		console.log("count:", count)
+	}
+	
+	function addMarkers(data, map){
+		for (var key in data) {
+			var lat = parseFloat(data[key][0])
+			var lg = parseFloat(data[key][1])
+			//var marker = L.marker([lat, lg]).addTo(mymap);
+			var circle = L.circle([lat, lg], {
+			  color: 'red',
+			  fillColor: '#f03',
+			  fillOpacity: 0.5,
+			  radius: 500
+		  }).addTo(mymap);
+		}
+		
+	}
+	
+  
       var mymap = L.map('mapid').setView([55.605, 13], 7);
       
       
@@ -71,8 +173,8 @@ console.log("read_routes");
       }).addTo(mymap);
 
 
-      var marker = L.marker([51.5, -0.09]).addTo(mymap);
-
+      getAirports(mymap)
+	  
       var circle = L.circle([51.508, -0.11], {
           color: 'red',
           fillColor: '#f03',
