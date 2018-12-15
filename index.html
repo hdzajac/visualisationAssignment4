@@ -38,129 +38,152 @@ text {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"> </script>
 <script src = "https://d3js.org/d3-request.v1.min.js"></script>
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
 
+  <script src = "https://d3js.org/d3-request.v1.min.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/topojson.v1.min.js"></script>
+<script src="tooltip.js"></script>
+
+<script src="https://d3js.org/d3-array.v1.min.js"></script>
+<script src="https://d3js.org/d3-geo.v1.min.js"></script>
+<script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
 
 </head>
 <body >
-  <div id="mapid"></div>
+    <div>
+    <button id="bad">BAD</button>
+    <button id="good">GOOD</button>
+  </div>
+  <div id="mapid" style="display: none"></div>
+<svg width="960" height="500"></svg>
   <script >
-	var airports = {}; 
-	var danishAirportsCoord = {}
-	var danishAirportsRoutes = {}
-	
-	function Graph()
-	{
-		this.adjList = {}
-	}
-	
-	Graph.prototype.addVertex = function(vertex)
-	{
-		this.adjList[vertex] = []
-	}
-	
-	Graph.prototype.addEdge = function(v1, v2)
-	{	
-		this.adjList[v1].push(v2)
-	}
-	
-	Graph.prototype.vertexExists = function(v1)
-	{	
-		return v1 in this.adjList
-	}
-	
-	Graph.prototype.getAdjList = function()
-	{	
-		return this.adjList
-	}
-	
-	
-	
-	function getAirports(map)
-	{
-	 d3.csv("airports.csv", function(data) 
-	 {
-			var graph = new Graph()
-			for (var i = 0; i < data.length; i++) 
-			{							
-				var airport = data[i]
-				airports[airport.Code] = [ data[i].Latitude,  data[i].Longitude]	
-				if (airport.Country == "Denmark")
-				{
-					danishAirportsCoord[airport.Code] = [ data[i].Latitude,  data[i].Longitude]
-					graph.addVertex(airport.Code)	
-				}
-				
-			}	
-			
-			addMarkers(danishAirportsCoord, map)	
-						
-			d3.csv("routes.csv", function(routes) 
-			{			
-				for (var i = 0; i < routes.length; i++) 
-				{
-					var route = routes[i]					
-					if (route.Source in danishAirportsCoord)	// from Dk					
-					{
-						graph.addEdge(route.Source, route.Destination)
-						if(graph.vertexExists(route.Destination) == false)
-						{
-							graph.addVertex(route.Destination)
-						}
-					}	
 
-					if (route.Destination in danishAirportsCoord)	// to DK					
-					{
-						//if(graph.vertexExists(route.Source))
-						//	graph.addEdge(route.Source, route.Destination)
-					}	
-				}
-				
-				console.log("Graph:", graph)
-				addLines(airports, graph, map)
-			});
-				
-		});
-		
+$("#bad").on("click", function(e){
 
-	}
+  $(e.target).hide();
+  $("#mapid").show();
 
-	
-	function addLines(airports, graph, map)
-	{		
-		var adjList = graph.getAdjList()
-		var nodes = Object.keys(adjList)
-		for (var i = 0; i < nodes.length; i++) 
-		{
-			var neighbors = adjList[nodes[i]]
-			for (var j = 0; j <neighbors.length; j++) 
-			{
-				
-				var latlonS = [parseFloat(airports[nodes[i]][0]), parseFloat(airports[nodes[i]][1])]
-				var latlonD = [parseFloat(airports[neighbors[j]][0]), parseFloat(airports[neighbors[j]][1])]
-				var points = [latlonS, latlonD]
-				console.log(points)
-				var polyline = L.polyline(points).addTo(map);
-			}
-			
-		}
-		console.log("count:", count)
-	}
-	
-	function addMarkers(data, map){
-		for (var key in data) {
-			var lat = parseFloat(data[key][0])
-			var lg = parseFloat(data[key][1])
-			//var marker = L.marker([lat, lg]).addTo(mymap);
-			var circle = L.circle([lat, lg], {
-			  color: 'red',
-			  fillColor: '#f03',
-			  fillOpacity: 0.5,
-			  radius: 500
-		  }).addTo(mymap);
-		}
-		
-	}
-	
+  var airports = {}; 
+  var danishAirportsCoord = {}
+  var danishAirportsRoutes = {}
+  
+  function Graph()
+  {
+    this.adjList = {}
+  }
+  
+  Graph.prototype.addVertex = function(vertex)
+  {
+    this.adjList[vertex] = []
+  }
+  
+  Graph.prototype.addEdge = function(v1, v2)
+  { 
+    this.adjList[v1].push(v2)
+  }
+  
+  Graph.prototype.vertexExists = function(v1)
+  { 
+    return v1 in this.adjList
+  }
+  
+  Graph.prototype.getAdjList = function()
+  { 
+    return this.adjList
+  }
+  
+  
+  
+  function getAirports(map)
+  {
+   d3.csv("airports.csv", function(data) 
+   {
+      var graph = new Graph()
+      for (var i = 0; i < data.length; i++) 
+      {             
+        var airport = data[i]
+        airports[airport.Code] = [ data[i].Latitude,  data[i].Longitude]  
+        if (airport.Country == "Denmark")
+        {
+          danishAirportsCoord[airport.Code] = [ data[i].Latitude,  data[i].Longitude]
+          graph.addVertex(airport.Code) 
+        }
+        
+      } 
+      
+      addMarkers(danishAirportsCoord, map)  
+            
+      d3.csv("routes.csv", function(routes) 
+      {     
+        for (var i = 0; i < routes.length; i++) 
+        {
+          var route = routes[i]         
+          if (route.Source in danishAirportsCoord)  // from Dk          
+          {
+            graph.addEdge(route.Source, route.Destination)
+            if(graph.vertexExists(route.Destination) == false)
+            {
+              graph.addVertex(route.Destination)
+            }
+          } 
+
+          if (route.Destination in danishAirportsCoord) // to DK          
+          {
+            //if(graph.vertexExists(route.Source))
+            //  graph.addEdge(route.Source, route.Destination)
+          } 
+        }
+        
+        console.log("Graph:", graph)
+        addLines(airports, graph, map)
+      });
+        
+    });
+    
+
+  }
+
+  
+  function addLines(airports, graph, map)
+  {   
+    var adjList = graph.getAdjList()
+    var nodes = Object.keys(adjList)
+    for (var i = 0; i < nodes.length; i++) 
+    {
+      var neighbors = adjList[nodes[i]]
+      for (var j = 0; j <neighbors.length; j++) 
+      {
+        
+        var latlonS = [parseFloat(airports[nodes[i]][0]), parseFloat(airports[nodes[i]][1])]
+        var latlonD = [parseFloat(airports[neighbors[j]][0]), parseFloat(airports[neighbors[j]][1])]
+        var points = [latlonS, latlonD]
+        console.log(points)
+        var polyline = L.polyline(points).addTo(map);
+      }
+      
+    }
+    console.log("count:", count)
+  }
+  
+  function addMarkers(data, map){
+    for (var key in data) {
+      var lat = parseFloat(data[key][0])
+      var lg = parseFloat(data[key][1])
+      //var marker = L.marker([lat, lg]).addTo(mymap);
+      var circle = L.circle([lat, lg], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.5,
+        radius: 500
+      }).addTo(mymap);
+    }
+    
+  }
+  
   
       var mymap = L.map('mapid').setView([55.605, 13], 7);
       
@@ -174,96 +197,338 @@ text {
 
 
       getAirports(mymap)
-	  
+    
       var circle = L.circle([51.508, -0.11], {
           color: 'red',
           fillColor: '#f03',
           fillOpacity: 0.5,
           radius: 500
       }).addTo(mymap);
+});
+
+
+$("#good").on("click", function(e){
+  $(e.target).hide();
+  $("#mapid").show();
+
+
+var svg = d3.select("svg");
+var plot = svg.append("g").attr("id", "plot");
+var radius = {min: 6, max: 12};
+
+var width  = +svg.attr("width");
+var height = +svg.attr("height");
+
+
+  var airports = []; 
+  var byiata;
+  var danishAirportsCoord = {}
+  var tmpRoutes = {}
+  var routes = [];
+
+  // only focus on the continental united states
+// https://github.com/d3/d3-geo#geoAlbers
+//var projection = d3.geoNaturalEarth1();
+  
+  function Graph()
+  {
+    this.adjList = {}
+  }
+  
+  Graph.prototype.addVertex = function(vertex)
+  {
+    this.adjList[vertex] = []
+  }
+  
+  Graph.prototype.addEdge = function(v1, v2)
+  { 
+    this.adjList[v1].push(v2)
+  }
+  
+  Graph.prototype.vertexExists = function(v1)
+  { 
+    return v1 in this.adjList
+  }
+  
+  Graph.prototype.getAdjList = function()
+  { 
+    return this.adjList
+  }
+
+  
+  function getAirports()
+  {
+   d3.csv("airports.csv", function(data) 
+   {
+      var graph = new Graph()
+      for (var i = 0; i < data.length; i++) 
+      {             
+        var airport = data[i]
+        if(airport.Code === "\\N")
+          continue;
+        airports.push({
+          iata: data[i].Code,
+          latitude: +data[i].Latitude,
+          longitude: +data[i].Longitude,
+          degree: 0
+        });
+        if (airport.Country == "Denmark")
+        {
+          danishAirportsCoord[airport.Code] = [ data[i].Latitude,  data[i].Longitude]
+          // graph.addVertex(airport.Code) 
+        }
+        
+      } 
+
+      airports = airports.filter(word => word.iata !== "\N");
+      console.log("airports: ", airports);
+
+      byiata = d3.map(airports, function(d) { 
+        return d.iata; });
+
       
-      // var svg = d3.select("svg"),
-      //     width = +svg.attr("width"),
-      //     height = +svg.attr("height");
-      
-      // var color = d3.scaleOrdinal(d3.schemeCategory20);
-      
-      // var simulation = d3.forceSimulation()
-      //     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-      //     .force("charge", d3.forceManyBody())
-      //     .force("center", d3.forceCenter(width / 2, height / 2));
-      
-      // d3.json("miserables.json", function(error, graph) {
-      //   if (error) throw error;
-      
-      //   var link = svg.append("g")
-      //       .attr("class", "links")
-      //     .selectAll("line")
-      //     .data(graph.links)
-      //     .enter().append("line")
-      //       .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
-      
-      //   var node = svg.append("g")
-      //       .attr("class", "nodes")
-      //     .selectAll("g")
-      //     .data(graph.nodes)
-      //     .enter().append("g")
-          
-      //   var circles = node.append("circle")
-      //       .attr("r", 5)
-      //       .attr("fill", function(d) { return color(d.group); })
-      //       .call(d3.drag()
-      //           .on("start", dragstarted)
-      //           .on("drag", dragged)
-      //           .on("end", dragended));
-      
-      //   var lables = node.append("text")
-      //       .text(function(d) {
-      //         return d.id;
-      //       })
-      //       .attr('x', 6)
-      //       .attr('y', 3);
-      
-      //   node.append("title")
-      //       .text(function(d) { return d.id; });
-      
-      //   simulation
-      //       .nodes(graph.nodes)
-      //       .on("tick", ticked);
-      
-      //   simulation.force("link")
-      //       .links(graph.links);
-      
-      //   function ticked() {
-      //     link
-      //         .attr("x1", function(d) { return d.source.x; })
-      //         .attr("y1", function(d) { return d.source.y; })
-      //         .attr("x2", function(d) { return d.target.x; })
-      //         .attr("y2", function(d) { return d.target.y; });
-      
-      //     node
-      //         .attr("transform", function(d) {
-      //           return "translate(" + d.x + "," + d.y + ")";
-      //         })
-      //   }
-      // });
-      
-      // function dragstarted(d) {
-      //   if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-      //   d.fx = d.x;
-      //   d.fy = d.y;
-      // }
-      
-      // function dragged(d) {
-      //   d.fx = d3.event.x;
-      //   d.fy = d3.event.y;
-      // }
-      
-      // function dragended(d) {
-      //   if (!d3.event.active) simulation.alphaTarget(0);
-      //   d.fx = null;
-      //   d.fy = null;
-      // }
+      // addMarkers(danishAirportsCoord, map)  
+            
+      d3.csv("routes.csv", function(data) 
+      {     
+        for (var i = 0; i < data.length; i++) 
+        {
+          var route = data[i]  
+          if(route.Source.length === 3 && route.Destination.length === 3){
+            if(tmpRoutes.hasOwnProperty(route.Source)){
+              if (tmpRoutes[route.Source].hasOwnProperty(route.Destination)){
+                tmpRoutes[route.Source][route.Destination].count += 1;
+              }
+              else {
+                tmpRoutes[route.Source][route.Destination] = {count: 1};
+              }
+            }
+            else {
+              tmpRoutes[route.Source] = {};
+              tmpRoutes[route.Source][route.Destination]  = {count : 1};
+            }
+          }
+        }
+
+        Object.keys(tmpRoutes).forEach(function(src){
+          Object.keys(tmpRoutes[src]).forEach(function(dest){
+            var flight = {};
+            var sourceAirport = byiata.get(String(src));
+            var destAirport = byiata.get(String(dest));
+
+            if (typeof destAirport !== "undefined" && typeof sourceAirport !== "undefined"){
+                          sourceAirport.degree +=  1;
+            destAirport.degree += 1;
+            byiata.set(String(src), sourceAirport);
+            byiata.set(String(dest), destAirport) 
+
+
+            flight.source = sourceAirport;
+            flight.destination = destAirport;
+            flight.count =  tmpRoutes[src][dest].count;
+
+            routes.push(flight);
+            }
+
+          });
+        });
+
+      airports = airports.filter(a => +a.degree !== 0);
+
+    var bydegree = function(a, b) {
+      return d3.descending(a.degree, b.degree);
+    };
+
+    // sort remaining airports by degree
+    airports.sort(bydegree);
+    // calculate projected x, y pixel locations
+    airports.forEach(function(d) {
+      var coords = projection([d.longitude, d.latitude]);
+      d.x = coords[0];
+      d.y = coords[1];
+    });
+
+    // start drawing everything
+    console.log("iataaaa" , byiata);
+        console.log(routes);
+    drawData(byiata.values(), routes);
+
+      });
+    });   
+  }
+
+
+/*
+ * draw airports and flights using edge bundling
+ */
+function drawData(airports, flights) {
+
+  // setup and start edge bundling
+  var bundle = generateSegments(airports, flights);
+
+  // https://github.com/d3/d3-shape#curveBundle
+  var line = d3.line()
+    .curve(d3.curveBundle)
+    .x(function(d) { return d.x; })
+    .y(function(d) { return d.y; });
+
+  var links = plot.append("g").attr("id", "flights")
+    .selectAll("path.flight")
+    .data(bundle.paths)
+    .enter()
+    .append("path")
+    .attr("d", line)
+    .style("fill", "none")
+    .style("stroke", "#252525")
+    .style("stroke-width", 0.5)
+    .style("stroke-opacity", 0.2);
+
+  // https://github.com/d3/d3-force
+  var layout = d3.forceSimulation()
+    // settle at a layout faster
+    .alphaDecay(0.1)
+    // nearby nodes attract each other
+    .force("charge", d3.forceManyBody()
+      .strength(10)
+      .distanceMax(radius.max * 2)
+    )
+    // edges want to be as short as possible
+    // prevents too much stretching
+    .force("link", d3.forceLink()
+      .strength(0.8)
+      .distance(0)
+    )
+    .on("tick", function(d) {
+      links.attr("d", line);
+    })
+    .on("end", function(d) {
+      console.log("Layout complete!");
+    });
+
+  layout.nodes(bundle.nodes).force("link").links(bundle.links);
+
+  // draw airports
+  var scale = d3.scaleSqrt()
+    .domain(d3.extent(airports, function(d) { return d.degree; }))
+    .range([radius.min, radius.max]);
+
+  plot.append("g").attr("id", "airports")
+    .selectAll("circle.airport")
+    .data(airports)
+    .enter()
+    .append("circle")
+    .attr("r", function(d) { return scale(d.degree); })
+    .attr("cx", function(d) { return d.x; })
+    .attr("cy", function(d) { return d.y; })
+    .style("fill", "white")
+    .style("opacity", 0.6)
+    .style("stroke", "#252525")
+    .on("mouseover", onMouseOver)
+    .on("mousemove", onMouseMove)
+    .on("mouseout", onMouseOut);
+}
+
+/*
+ * Turns a single edge into several segments that can
+ * be used for simple edge bundling.
+ */
+function generateSegments(nodes, links) {
+  // calculate distance between two nodes
+  var distance = function(source, target) {
+    // sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
+    var dx2 = Math.pow(target.x - source.x, 2);
+    var dy2 = Math.pow(target.y - source.y, 2);
+
+    return Math.sqrt(dx2 + dy2);
+  };
+
+  // max distance any two nodes can be apart is the hypotenuse!
+  var hypotenuse = Math.sqrt(width * width + height * height);
+
+  // number of inner nodes depends on how far nodes are apart
+  var inner = d3.scaleLinear()
+    .domain([0, hypotenuse])
+    .range([1, 15]);
+
+  // generate separate graph for edge bundling
+  // nodes: all nodes including control nodes
+  // links: all individual segments (source to target)
+  // paths: all segments combined into single path for drawing
+  var bundle = {nodes: [], links: [], paths: []};
+
+  // make existing nodes fixed
+  bundle.nodes = nodes.map(function(d, i) {
+    d.fx = d.x;
+    d.fy = d.y;
+    return d;
+  });
+
+  links.forEach(function(d, i) {
+    // calculate the distance between the source and target
+    var length = distance(d.source, d.target);
+
+    // calculate total number of inner nodes for this link
+    var total = Math.round(inner(length));
+
+    // create scales from source to target
+    var xscale = d3.scaleLinear()
+      .domain([0, total + 1]) // source, inner nodes, target
+      .range([d.source.x, d.target.x]);
+
+    var yscale = d3.scaleLinear()
+      .domain([0, total + 1])
+      .range([d.source.y, d.target.y]);
+
+    // initialize source node
+    var source = d.source;
+    var target = null;
+
+    // add all points to local path
+    var local = [source];
+
+    for (var j = 1; j <= total; j++) {
+      // calculate target node
+      target = {
+        x: xscale(j),
+        y: yscale(j)
+      };
+
+      local.push(target);
+      bundle.nodes.push(target);
+
+      bundle.links.push({
+        source: source,
+        target: target
+      });
+
+      source = target;
+    }
+
+    local.push(d.target);
+
+    // add last link to target node
+    bundle.links.push({
+      source: target,
+      target: d.target
+    });
+
+    bundle.paths.push(local);
+  });
+
+  return bundle;
+}
+
+
+
+
+
+            getAirports();
+
+
+
+});
+
+    
       
       </script>
 </body>
