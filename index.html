@@ -22,7 +22,25 @@ text {
    right: 0;
    bottom: 0;
    left: 0;
+      pointer-events: none;
 }
+
+    .hidden {
+      display: none;
+    }
+
+    div.tooltip {
+      color: #222; 
+      background: #fff; 
+      border-radius: 3px; 
+      box-shadow: 0px 0px 2px 0px #a6a6a6; 
+      padding: .2em; 
+      text-shadow: #f5f5f5 0 1px 0;
+      opacity: 0.9; 
+      position: absolute;
+      size: 10pt;
+      font-family: "Open Sans";
+    }
 
 </style>
 
@@ -221,6 +239,10 @@ var radius = {min: 0.5, max: 7};
 var width  = +svg.attr("width");
 var height = +svg.attr("height");
 
+    var offsetL = document.getElementById('mapid').offsetLeft+10;
+    var offsetT = document.getElementById('mapid').offsetTop+10;
+
+
 
 var airports = []; 
 var byiata;
@@ -243,6 +265,12 @@ var routes = [];
   var center = [25, 72.6];
   var scale = 620;
   var  projection = d3.geoMercator().scale(scale).translate([width / 2, 0]).center(center);
+
+
+    var tooltip = d3.select("#mapid")
+         .append("div")
+         .attr("class", "tooltip hidden");
+
   //var projection = d3.geoNaturalEarth1()
   function getAirports()
   {
@@ -285,13 +313,17 @@ var routes = [];
 
       byiata = d3.map(airports, function(d) { 
         return d.iata; });
+
+      console.log(byiata );
             
       d3.csv("routes.csv", function(data) 
       {     
         for (var i = 0; i < data.length; i++) 
         {
           var route = data[i]  
+
           if(route.Source.length === 3 && route.Destination.length === 3){
+            if ( typeof byiata.get(route.Source) !== "undefined" && typeof byiata.get(route.Destination) !== "undefined" &&  (byiata.get(route.Source).country === "Denmark" || byiata.get(route.Destination).country === "Denmark")){
             if(tmpRoutes.hasOwnProperty(route.Source)){
               if (tmpRoutes[route.Source].hasOwnProperty(route.Destination)){
                 tmpRoutes[route.Source][route.Destination].count += 1;
@@ -304,6 +336,7 @@ var routes = [];
               tmpRoutes[route.Source] = {};
               tmpRoutes[route.Source][route.Destination]  = {count : 1};
             }
+          }
           }
         }
 
@@ -339,8 +372,6 @@ var routes = [];
 
     // sort remaining airports by degree
     airports.sort(bydegree);
-    console.log("Up untill here data is alligned, and should work with the code down there, we need to place it on some background it won't work with dynamic map to have edge bundling");
-
     //
     //
     // upgraded one shows how it will look and the working code is there
@@ -383,7 +414,7 @@ function drawMap(error, map) {
   // https://github.com/topojson/topojson-client/blob/master/README.md#mesh
 
   // used to filter only interior borders
-  var isInterior = function(a, b) { return a !== b; };
+  var isInterior = function(a, b){ return a !== b; };
 
   // used to filter only exterior borders
   var isExterior = function(a, b) { return a === b; };
@@ -424,8 +455,8 @@ function drawData(airports, flights) {
     .attr("d", line)
     .style("fill", "none")
     .style("stroke", "#74a6f7")
-    .style("stroke-width", 0.4)
-    .style("stroke-opacity", 0.1);
+    .style("stroke-width", 0.8)
+    .style("stroke-opacity", 0.5);
 
   // https://github.com/d3/d3-force
   var layout = d3.forceSimulation()
@@ -466,81 +497,17 @@ function drawData(airports, flights) {
     .attr("cy", function(d) { return d.y; })
     .style("fill", "white")
     .style("opacity", 0.6)
-	
+	  .on("mouseover", function (d,i) {
+      label = `${d.city},${d.country}
+      \nConnections available: ${d.degree}`;
+      var mouse = d3.mouse(svg.node())
+        .map( function(d) { return parseInt(d); } );
+      tooltip.classed("hidden", false)
+        .attr("style", "left:"+(mouse[0]+offsetL)+"px;top:"+(mouse[1]+offsetT)+"px")
+        .html(label);
+        })
+    .on("mouseout",  function(d,i) {tooltip.classed("hidden", true); })
     .style("stroke", "#252525")
-    .on("mouseover", onMouseOver)
-    .on("mousemove", onMouseMove)
-    .on("mouseout", onMouseOut);
-}
-
-
-// tailored for this example (assumes g#plot, d.id)
-function onMouseOver(d) {
-  console.log(d)
-  var tooltip = d3.select("text#tooltip");
- 
-  // initialize if missing
-  if (tooltip.size() < 1) {
-    tooltip = d3.select("g#plot").append("text").attr("id", "tooltip");
-  }
-
-  // calculate bounding box of plot WITHOUT tooltip
-  tooltip.style("display", "none");
-  onMouseMove(d);
-
-  var bbox = {
-    plot: d3.select("g#plot").node().getBBox()
-  }
-
-  // restore tooltip display but keep it invisible
-  tooltip.style("display", null);
-  tooltip.style("visibility", "hidden");
-  tooltip.style("stroke", "#f7ce94")
-  tooltip.style("stroke-width", 0.4)
-  tooltip.style("stroke-opacity", 0.8)
-
-  // now set tooltip text and attributes
-  tooltip.text(d.name + " in " + d.city + ", " + d.country);
-
-  tooltip.attr("text-anchor", "end");
-  tooltip.attr("dx", -5);
-  tooltip.attr("dy", -5);
-
-  // calculate resulting bounding box of text
-  bbox.text = tooltip.node().getBBox();
-
-  // determine if need to show right of pointer
-  if (bbox.text.x < bbox.plot.x) {
-    tooltip.attr("text-anchor", "start");
-    tooltip.attr("dx", 5);
-  }
-
-  // determine if need to show below pointer
-  if (bbox.text.y < bbox.plot.y) {
-    tooltip.attr("dy", bbox.text.height / 2);
-
-    // also need to fix dx in this case
-    // so it doesn't overlap the mouse pointer
-    if (bbox.text.x < bbox.plot.x) {
-      tooltip.attr("dx", 15);
-    }
-  }
-
-  tooltip.style("visibility", "visible");
-  d3.select(this).classed("selected", true);
-}
-
-function onMouseMove(d) {
-  var coords = d3.mouse(d3.select("g#plot").node());
-
-  d3.select("text#tooltip")
-    .attr("x", coords[0])
-    .attr("y", coords[1]);
-}
-
-function onMouseOut(d) {
-  d3.select(this).classed("selected", false);
-  d3.select("text#tooltip").style("visibility", "hidden");
 }
 
 
